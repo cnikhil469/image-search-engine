@@ -1,23 +1,23 @@
-import React, { useState } from 'react'
-import { searchImages } from '../services/unsplashApi'
+import React, { useState } from "react";
+import { searchImages } from "../services/unsplashApi";
 
 function SearchBar({ onSearchResults, onLoadingChange }) {
-  const [searchTerm, setSearchTerm] = useState('')
+  const [searchTerm, setSearchTerm] = useState("");
 
   const handleSearch = async (e) => {
-    e.preventDefault()
-    if (!searchTerm.trim()) return
+    e.preventDefault();
+    if (!searchTerm.trim()) return;
 
-    onLoadingChange(true)
+    onLoadingChange(true);
     try {
-      const results = await searchImages(searchTerm)
-      onSearchResults(results)
+      const results = await searchImages(searchTerm);
+      onSearchResults(results);
     } catch (error) {
-      console.error('Error:', error)
+      console.error("Error:", error);
     } finally {
-      onLoadingChange(false)
+      onLoadingChange(false);
     }
-  }
+  };
 
   return (
     <form onSubmit={handleSearch} className="search-form">
@@ -32,7 +32,7 @@ function SearchBar({ onSearchResults, onLoadingChange }) {
         Search
       </button>
     </form>
-  )
+  );
 }
 
-export default SearchBar 
+export default SearchBar;
