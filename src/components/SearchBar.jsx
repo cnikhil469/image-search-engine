@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { searchImages } from "../services/unsplashApi";
 
-function SearchBar({ onSearchResults, onLoadingChange }) {
+function SearchBar({ onSearchResults, onLoadingChange, onQueryChange }) {
   const [searchTerm, setSearchTerm] = useState("");
 
   const handleSearch = async (e) => {
@@ -10,8 +10,9 @@ function SearchBar({ onSearchResults, onLoadingChange }) {
 
     onLoadingChange(true);
     try {
-      const results = await searchImages(searchTerm);
-      onSearchResults(results);
+      const response = await searchImages(searchTerm);
+      onSearchResults(response.results, response.total, response.totalPages);
+      onQueryChange(searchTerm);
     } catch (error) {
       console.error("Error:", error);
     } finally {
