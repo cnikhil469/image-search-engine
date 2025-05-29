@@ -2,16 +2,16 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import SearchBar from './components/SearchBar'
 import ImageGrid from './components/ImageGrid'
-import Pagination from './components/Pagination'
 import { searchImages } from './services/unsplashApi'
 
 function App() {
   const [images, setImages] = useState([])
   const [loading, setLoading] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
   const [currentQuery, setCurrentQuery] = useState('')
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light')
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -22,20 +22,25 @@ function App() {
     setTheme(theme === 'light' ? 'dark' : 'light')
   }
 
-  const handleSearchResults = (results, total, pages) => {
+  const handleSearchResults = (results, total) => {
     setImages(results)
-    setTotalPages(pages)
     setCurrentPage(1)
+    setHasMore(total > results.length)
+    setError(null)
   }
 
-  const handlePageChange = async (newPage) => {
-    if (newPage < 1 || newPage > totalPages) return
+  const handleLoadMore = async () => {
+    if (!hasMore || loading) return
     setLoading(true)
+    setError(null)
     try {
-      const response = await searchImages(currentQuery, newPage)
-      setImages(response.results)
-      setCurrentPage(newPage)
+      const nextPage = currentPage + 1
+      const response = await searchImages(currentQuery, nextPage)
+      setImages(prevImages => [...prevImages, ...response.results])
+      setCurrentPage(nextPage)
+      setHasMore(response.total > (nextPage * 12))
     } catch (error) {
+      setError('Failed to load more images. Please try again.')
       console.error('Error:', error)
     } finally {
       setLoading(false)
@@ -50,6 +55,7 @@ function App() {
           className="theme-toggle"
           onClick={toggleTheme}
           aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+          data-tooltip={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
         >
           {theme === 'light' ? '🌙' : '☀️'}
         </button>
@@ -58,15 +64,21 @@ function App() {
         onSearchResults={handleSearchResults}
         onLoadingChange={setLoading}
         onQueryChange={setCurrentQuery}
+        onError={setError}
       />
-      {loading && <p>Loading...</p>}
+      {loading && <p className="status-message">Loading...</p>}
+      {error && <p className="error-message">{error}</p>}
       <ImageGrid images={images} />
-      {images.length > 0 && (
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
+      {images.length > 0 && hasMore && (
+        <div className="load-more-container">
+          <button 
+            className="load-more-button"
+            onClick={handleLoadMore}
+            disabled={loading}
+          >
+            {loading ? 'Loading...' : 'Load More'}
+          </button>
+        </div>
       )}
       <p>Made by <a href="https://github.com/cnikhil469">cnikhil469</a></p>
     </div>
